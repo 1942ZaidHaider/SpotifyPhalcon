@@ -2,6 +2,7 @@
 
 use Phalcon\Mvc\Controller;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 
 class SpotifyController extends Controller
 {
@@ -17,24 +18,38 @@ class SpotifyController extends Controller
             'base_uri' => $this->url,
             'timeout'  => 5,
         ]);
-        $json = $client->request(
-            "GET",
-            "/v1/users/$this->spot_id/playlists",
-            ["query" => ["access_token" => $this->access]]
-        )->getBody();
+        try {
+            $json = $client->request(
+                "GET",
+                "/v1/users/$this->spot_id/playlists",
+                ["query" => ["access_token" => $this->access]]
+            )->getBody();
+        } catch (ClientException $e) {
+            $this->eventsManager->fire("spotify:tokenExpired", $this);
+            $this->response->redirect("spotify/index");
+        }
         $this->view->playlists = json_decode($json, 1);
         if ($id) {
             $client = new Client([
                 'base_uri' => $this->url,
                 'timeout'  => 5,
             ]);
-            $json = $client->request(
-                "GET",
-                "/v1/playlists/$id/tracks",
-                ["query" => ["access_token" => $this->access]]
-            )->getBody();
+            try {
+                $json = $client->request(
+                    "GET",
+                    "/v1/playlists/$id/tracks",
+                    ["query" => ["access_token" => $this->access]]
+                )->getBody();
+            } catch (ClientException $e) {
+                $this->eventsManager->fire("spotify:tokenExpired", $this);
+                $json = $client->request(
+                    "GET",
+                    "/v1/playlists/$id/tracks",
+                    ["query" => ["access_token" => $this->access]]
+                )->getBody();
+            }
             $this->view->playlist_data = json_decode($json, 1);
-            $this->view->playListID=$id;
+            $this->view->playListID = $id;
         }
     }
     public function newPlaylistAction()
@@ -47,11 +62,20 @@ class SpotifyController extends Controller
                 'timeout'  => 5,
                 "headers" => ["Authorization" => "Bearer $this->access"]
             ]);
-            $json = $client->request(
-                "POST",
-                "/v1/users/$this->spot_id/playlists",
-                ["body" => json_encode($args)]
-            )->getBody();
+            try {
+                $json = $client->request(
+                    "POST",
+                    "/v1/users/$this->spot_id/playlists",
+                    ["body" => json_encode($args)]
+                )->getBody();
+            } catch (ClientException $e) {
+                $this->eventsManager->fire("spotify:tokenExpired", $this);
+                $json = $client->request(
+                    "POST",
+                    "/v1/users/$this->spot_id/playlists",
+                    ["body" => json_encode($args)]
+                )->getBody();
+            }
         }
         $this->response->redirect("spotify");
     }
@@ -61,11 +85,20 @@ class SpotifyController extends Controller
             'base_uri' => $this->url,
             'timeout'  => 5,
         ]);
-        $json = $client->request(
-            "GET",
-            "/v1/users/$this->spot_id/playlists",
-            ["query" => ["access_token" => $this->access]]
-        )->getBody();
+        try {
+            $json = $client->request(
+                "GET",
+                "/v1/users/$this->spot_id/playlists",
+                ["query" => ["access_token" => $this->access]]
+            )->getBody();
+        } catch (ClientException $e) {
+            $this->eventsManager->fire("spotify:tokenExpired", $this);
+            $json = $client->request(
+                "GET",
+                "/v1/users/$this->spot_id/playlists",
+                ["query" => ["access_token" => $this->access]]
+            )->getBody();
+        }
         $this->view->playlists = json_decode($json, 1);
         $this->view->uri = $uri;
         if ($this->request->isPost()) {
@@ -78,13 +111,21 @@ class SpotifyController extends Controller
             $args = [
                 "uris" => [$post['uris']]
             ];
-            //die(json_encode($args));
             $id = $post['playlist'];
-            $json = $client->request(
-                "POST",
-                "/v1/playlists/$id/tracks",
-                ["body" => json_encode($args)]
-            )->getBody();
+            try {
+                $json = $client->request(
+                    "POST",
+                    "/v1/playlists/$id/tracks",
+                    ["body" => json_encode($args)]
+                )->getBody();
+            } catch (ClientException $e) {
+                $this->eventsManager->fire("spotify:tokenExpired", $this);
+                $json = $client->request(
+                    "POST",
+                    "/v1/playlists/$id/tracks",
+                    ["body" => json_encode($args)]
+                )->getBody();
+            }
             $this->response->redirect("/index/search");
         }
     }
@@ -94,11 +135,20 @@ class SpotifyController extends Controller
             'base_uri' => $this->url,
             'timeout'  => 5,
         ]);
-        $json = $client->request(
-            "DELETE",
-            "/v1/playlists/$id/followers",
-            ["query" => ["access_token" => $this->access]]
-        );
+        try {
+            $json = $client->request(
+                "DELETE",
+                "/v1/playlists/$id/followers",
+                ["query" => ["access_token" => $this->access]]
+            );
+        } catch (ClientException $e) {
+            $this->eventsManager->fire("spotify:tokenExpired", $this);
+            $json = $client->request(
+                "DELETE",
+                "/v1/playlists/$id/followers",
+                ["query" => ["access_token" => $this->access]]
+            );
+        }
         $this->response->redirect("spotify");
     }
     public function deleteTrackAction($uri, $id)
@@ -107,16 +157,32 @@ class SpotifyController extends Controller
             'base_uri' => $this->url,
             'timeout'  => 5,
         ]);
-        $data=[["uri" => $uri]];
+        $data = [["uri" => $uri]];
         //die(json_encode(["tracks" => $data]));
-        $json = $client->request(
-            "DELETE",
-            "/v1/playlists/$id/tracks",
-            [
-                "query" => ["access_token" => $this->access],
-                "body" => json_encode(["tracks" => $data])
-            ]
-        );
-        $this->response->redirect("spotify/index/$id");
+        try {
+            $json = $client->request(
+                "DELETE",
+                "/v1/playlists/$id/tracks",
+                [
+                    "query" => ["access_token" => $this->access],
+                    "body" => json_encode(["tracks" => $data])
+                ]
+            );
+        } catch (ClientException $e) {
+            $this->eventsManager->fire("spotify:tokenExpired", $this);
+            $json = $client->request(
+                "DELETE",
+                "/v1/playlists/$id/tracks",
+                [
+                    "query" => ["access_token" => $this->access],
+                    "body" => json_encode(["tracks" => $data])
+                ]
+            );
+        }
+    }
+    public function playerAction()
+    {
+        die("wip");
+
     }
 }

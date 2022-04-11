@@ -2,31 +2,95 @@
 
 use Phalcon\Mvc\Controller;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 
 class IndexController extends Controller
 {
+    public function initialize()
+    {
+        $this->spot_id = (Users::findFirst($this->session->user['id']))->spotify_id;
+        $this->access = $this->session->user['access'];
+        $this->url = "https://api.spotify.com/";
+    }
     public function indexAction()
     {
         if (isset($this->session->user)) {
-            $this->response->redirect("index/search");
+            $this->response->redirect("index/dash");
+        }
+        if ($this->request->isPost()) {
+            $post = $this->request->getPost();
+            $email = $post['email'];
+            $p = $post['password'];
+            $user = Users::findFirst("email = '$email' and password = '$p'");
+            $session = ["id" => $user->id, "access" => $user->token];
+            $this->session->user = $session;
+            if ($user) {
+                if ($user->token) {
+                    $this->response->redirect("index/dash");
+                } else {
+                    $this->response->redirect("index/auth");
+                }
+            }
+        }
+    }
+    public function signupAction()
+    {
+        $this->session->destroy();
+        if ($this->request->isPost()) {
+            $post = $this->request->getPost();
+            $email = $post['email'];
+            $p = $post['password'];
+            $user = new Users();
+            $user->assign($post);
+            $user->save();
+            $this->response->redirect("index");
+        }
+    }
+    public function dashAction()
+    {
+        $client = new Client([
+            'base_uri' => $this->url,
+            'timeout'  => 5,
+        ]);
+        try {
+            $json = $client->request(
+                "GET",
+                "/v1/me",
+                ["query" => ["access_token" => $this->access]]
+            )->getBody();
+            $this->view->data = json_decode($json, 1);
+
+            /** Recommendations */
+            
+            $client = new Client([
+                'base_uri' => $this->url,
+                'timeout'  => 5,
+            ]);
+            $args = [
+                "access_token" => $this->access,
+                "seed_artists" => "7dGJo4pcD2V6oG8kP0tJRR",
+                "seed_tracks" => "77IURH5NC56Jn09QHi76is",
+                "seed_genre" => "hip hop,rap",
+            ];
+            $json = $client->request(
+                "GET",
+                "/v1/recommendations",
+                ["query" => $args]
+            )->getBody();
+            $this->view->rec = json_decode($json, 1);
+        } catch (ClientException $e) {
+            $this->eventsManager->fire("spotify:tokenExpired", $this);
+            $this->response->redirect("index/dash");
         }
     }
     public function authAction()
     {
         $user = null;
-        if ($this->request->isPost()) {
-            $post = $this->request->getPost();
-            $user = Users::findFirst([
-                "conditions" => "email = ?1",
-                "bind" => [1 => $post['email']]
-            ]);
-        }
         if (isset($this->session->user)) {
-            $this->response->redirect("index/search");
-        } elseif ($user) {
-            $session = ["id" => $user->id, "access" => $user->token];
-            $this->session->user = $session;
-            $this->response->redirect("index/search");
+            $user = Users::findFirst($this->session->user['id']);
+        }
+        if (!$user) {
+            die("<h1>You be stupid</h1>");
         } else {
             $url = "https://accounts.spotify.com";
             $args = [
@@ -53,48 +117,54 @@ class IndexController extends Controller
     }
     public function successAction()
     {
-        $url = "https://accounts.spotify.com";
-        $path = "/api/token";
-        if ($this->request->getQuery("code")) {
-            $code = $this->request->getQuery("code");
-            $args = [
-                'grant_type' => "authorization_code",
-                "code" => $code,
-                'redirect_uri' => "http://localhost:8080/index/success",
-            ];
-            $headers = [
-                "Content-Type" => "application/x-www-form-urlencoded",
-                "Authorization" => "Basic " . base64_encode($this->config->spotify['client_id'] . ":" . $this->config->spotify['secret']),
-            ];
-            $client = new Client([
-                'base_uri' => $url,
-                'timeout'  => 5,
-                "headers" => $headers,
-            ]);
-            $response = $client->request("POST", $path, ["form_params" => $args]);
-            echo "<pre>";
-            $resJson = $response->getBody();
-            $json = json_decode($resJson, 1);
-            $token = $json['access_token'];
-            $refresh = $json['refresh_token'];
-            file_put_contents($this->config->spotify['cache'], $resJson);
-            $client = new Client([
-                'base_uri' => "https://api.spotify.com/",
-                'timeout'  => 2.0,
-            ]);
-            $response = $client->request("GET", "/v1/me", ["query" => ["access_token" => $token]]);
-            $spot = json_decode($response->getBody(), 1)["id"];
-            $user = new Users();
-            $user->token = $token;
-            $user->refresh = $refresh;
-            $user->email = base64_decode($this->cookies->get("current_email"));
-            $user->spotify_id = $spot;
-            $user->save();
-            $session = ["id" => $user->id, "access" => $token];
-            $this->session->user = $session;
-            $this->response->redirect("index/search");
+        $user = null;
+        if (isset($this->session->user)) {
+            $user = Users::findFirst($this->session->user['id']);
+        }
+        if (!$user) {
+            die("<h1>You be stupid</h1>");
         } else {
-            die("error");
+            $url = "https://accounts.spotify.com";
+            $path = "/api/token";
+            if ($this->request->getQuery("code")) {
+                $code = $this->request->getQuery("code");
+                $args = [
+                    'grant_type' => "authorization_code",
+                    "code" => $code,
+                    'redirect_uri' => "http://localhost:8080/index/success",
+                ];
+                $headers = [
+                    "Content-Type" => "application/x-www-form-urlencoded",
+                    "Authorization" => "Basic " . base64_encode($this->config->spotify['client_id'] . ":" . $this->config->spotify['secret']),
+                ];
+                $client = new Client([
+                    'base_uri' => $url,
+                    'timeout'  => 5,
+                    "headers" => $headers,
+                ]);
+                $response = $client->request("POST", $path, ["form_params" => $args]);
+                echo "<pre>";
+                $resJson = $response->getBody();
+                $json = json_decode($resJson, 1);
+                $token = $json['access_token'];
+                $refresh = $json['refresh_token'];
+                //file_put_contents($this->config->spotify['cache'], $resJson);
+                $client = new Client([
+                    'base_uri' => "https://api.spotify.com/",
+                    'timeout'  => 2.0,
+                ]);
+                $response = $client->request("GET", "/v1/me", ["query" => ["access_token" => $token]]);
+                $spot = json_decode($response->getBody(), 1)["id"];
+                $user->token = $token;
+                $user->refresh = $refresh;
+                $user->spotify_id = $spot;
+                $user->save();
+                $session = ["id" => $user->id, "access" => $token];
+                $this->session->user = $session;
+                $this->response->redirect("index/search");
+            } else {
+                die("error");
+            }
         }
     }
     public function searchAction()
@@ -115,47 +185,14 @@ class IndexController extends Controller
             ];
             try {
                 $response = $client->request("GET", "/v1/search", ["query" => $args]);
-                echo $response->getBody();
                 $data = json_decode($response->getBody(), 1);
-            } catch (Exception $e) {
-                $this->response->redirect('index/refresh');
+            } catch (ClientException $e) {
+                $this->eventsManager->fire("spotify:tokenExpired", $this);
+                $response = $client->request("GET", "/v1/search", ["query" => $args]);
+                $data = json_decode($response->getBody(), 1);
             }
         }
+
         $this->view->data = $data ?? [];
-    }
-    public function refreshAction()
-    {
-        if (!$this->session->user) {
-            $this->session->destroy();
-            $this->response->redirect('index/index');
-        } else {
-            $url = "https://accounts.spotify.com";
-            $path = "/api/token";
-            $user = Users::findFirst($this->session->user["id"]);
-            $code = $user->refresh;
-            $args = [
-                'grant_type' => "refresh_token",
-                "refresh_token" => $code,
-            ];
-            $headers = [
-                "Content-Type" => "application/x-www-form-urlencoded",
-                "Authorization" => "Basic " . base64_encode($this->config->spotify['client_id'] . ":" . $this->config->spotify['secret']),
-            ];
-            $client = new Client([
-                // Base URI is used with relative requests
-                'base_uri' => $url,
-                // You can set any number of default request options.
-                'timeout'  => 2.0,
-                "headers" => $headers,
-            ]);
-            $response = $client->request("POST", $path, ["form_params" => $args]);
-            $f=$this->session->user;
-            $f["access"] = json_decode($response->getBody(), 1)['access_token'];
-            $this->session->user=$f;
-            $user->token = json_decode($response->getBody(), 1)['access_token'];
-            $user->save();
-            //die($response->getBody());
-            $this->response->redirect('index/search');
-        }
     }
 }

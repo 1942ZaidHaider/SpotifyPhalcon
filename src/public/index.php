@@ -23,6 +23,7 @@ $loader->registerDirs(
     [
         APP_PATH . "/controllers/",
         APP_PATH . "/models/",
+        APP_PATH . "/listeners/",
     ]
 );
 
@@ -88,6 +89,7 @@ $container->set(
 );
 
 use Phalcon\Http\Response\Cookies;
+
 $container->set(
     'cookies',
     function () {
@@ -99,12 +101,27 @@ $container->set(
     }
 );
 
+use Phalcon\Events\Manager as EventsManager;
+
+$eventsManager = new EventsManager();
+$container->set(
+    "eventsManager",
+    function () use ($eventsManager) {
+        $eventsManager->attach(
+            'spotify',
+            new SpotifyListener()
+        );
+        return $eventsManager;
+    }
+);
+
+use GuzzleHttp\Exception\ClientException;
+
 try {
     // Handle the request
     $response = $application->handle(
         $_SERVER["REQUEST_URI"]
     );
-
     $response->send();
 } catch (\Exception $e) {
     echo 'Exception: ', $e->getMessage();
