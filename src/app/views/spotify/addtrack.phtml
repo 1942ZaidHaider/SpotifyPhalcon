@@ -1,0 +1,11 @@
+<div class='m-5'></div>
+<h3>Select playlist</h3>
+<form method="POST" class='form-group'>
+    <input hidden name="uris" value="<?php echo $uri ?>">
+    <select name='playlist' class='form-select'>
+        <?php foreach ($playlists["items"] as $v) { ?>
+            <option value="<?php echo $v['id']?>"><?php echo $v['name']?></option>
+        <?php } ?>
+    </select><br>
+    <input type="submit" value='Add' class='btn btn-primary'> 
+</form>

@@ -1,0 +1,43 @@
+<a href="/">HOME</a>
+<h3>New Playlist</h3>
+<form action="/spotify/newplaylist" method="post" class='form-group row'>
+    <div class='form-floating col-5'>
+        <input type="text" class='form-control' name="name" required placeholder="Playlist Name">
+        <label>&nbsp;&nbsp;Playlist Name</label>
+    </div>
+    <div class='col-2'><input type="submit" value="Add" class='btn btn-primary p-3 border w-100'></div>
+</form>
+<hr>
+<h3>Playlists</h3>
+<table class='table table-striped rounded mb-0'>
+    <tr>
+        <th>Name</th>
+        <th>Tracks</th>
+        <th></th>
+        <th></th>
+    </tr>
+    <?php foreach ($playlists['items'] as $v) { ?>
+        <tr>
+            <td><?php echo $v["name"] ?></td>
+            <td><?php echo $v["tracks"]["total"] ?></td>
+            <td><a href="/spotify/deleteplaylist/<?php echo $v["id"]?>">Delete</a></td>
+            <td><a href="/spotify/index/<?php echo $v["id"] ?>">View</a></td>
+        </tr>
+    <?php } ?>
+</table>
+<?php if ($playlist_data) { ?>
+    <hr>
+    <h3>Tracks</h3>
+    <table class='table table-striped rounded mb-0'>
+        <tr>
+            <th>Name</th>
+            <th></th>
+        </tr>
+        <?php foreach ($playlist_data['items'] as $v) { ?>
+            <tr>
+                <td><?php echo $v["track"]["name"] ?></td>
+                <td><a href="/spotify/deletetrack/<?php echo $v["track"]["uri"]?>/<?php echo $playListID?>">Delete</a></td>
+            </tr>
+        <?php } ?>
+    </table>
+<?php } ?>

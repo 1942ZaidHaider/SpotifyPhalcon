@@ -1,0 +1,118 @@
+<div class='container-fluid mt-5'>
+    <div class='navbar nav nav-expand'>
+        <div>
+            <a href="/spotify">View Playlists</a>
+        </div>
+    </div>
+</div>
+<form method="POST" class='form-group p-1 container'>
+    <input type="text" name="q" class="form-control" placeholder="Search">
+    <input hidden type="submit">
+    <input type="text" name="access_token" value="<?php echo $this->request->getQuery('access_token') ?>" hidden>
+    <div class='navbar nav nav-expand'>
+        <div>
+            <label><input class='form-check-input' type="checkbox" name='type[]' value="album">
+                album</label>
+        </div>
+        <div>
+            <label><input class='form-check-input' type="checkbox" name='type[]' value="artist">
+                artist</label>
+        </div>
+        <div>
+            <label><input class='form-check-input' type="checkbox" name='type[]' value="playlist">
+                playlist</label>
+        </div>
+        <div>
+            <label><input class='form-check-input' type="checkbox" name='type[]' value="track">
+                track</label>
+        </div>
+        <div>
+            <label><input class='form-check-input' type="checkbox" name='type[]' value="show">
+                show</label>
+        </div>
+        <div>
+            <label><input class='form-check-input' type="checkbox" name='type[]' value="episode">
+                episode</label>
+        </div>
+    </div>
+
+</form>
+<div class='container'>
+    <?php if ($data['shows']) { ?>
+        <hr>
+        <h3>Shows</h3>
+        <div class='row justify-content-center'>
+            <? foreach ($data['shows']['items'] as $v) { ?>
+                <div class='col-5 m-1 p-2 overflow-hidden text-center border border-muted rounded-3'>
+                    <div><img height="320" width="auto" src="<?php echo $v['images'][0]['url'] ?>"></div>
+                    <p class='fw-bold text-start'><?php echo $v['description'] ?></p>
+                </div>
+        <?php }
+        } ?>
+        </div>
+        <?php if ($data['tracks']) { ?>
+            <hr>
+            <h3>Tracks</h3>
+            <div class='row justify-content-center'>
+                <?php foreach ($data['tracks']['items'] as $v) { ?>
+                    <div class='col-5 m-1 p-2 overflow-hidden text-center border border-muted rounded-3'>
+                        <div><img height="320" width="auto" src="<?php echo $v['album']['images'][0]['url'] ?>"></div>
+                        <p class='fw-bold text-start'><?php echo $v['album']['name'] ?></p>
+                        <p class='fw-bold text-start'><a href="/spotify/addtrack/<?php echo $v['uri'] ?>">Add to Playlist</a></p>
+                    </div> <?php }
+                    } ?>
+            </div>
+            <?php if ($data['episodes']) { ?>
+                <hr>
+                <h3>Episodes</h3>
+                <div class='row justify-content-center'>
+                    <?php foreach ($data['episodes']['items'] as $v) { ?>
+                        <div class='col-5 m-1 p-2 overflow-hidden text-center border border-muted rounded-3'>
+                            <div><img height="320" width="auto" src="<?php echo $v['images'][0]['url'] ?>"></div>
+                            <p class='fw-bold text-start'><?php echo $v['name'] ?></p>
+                            <p class='fw-bold text-start'><a href="/spotify/addtrack/<?php echo $v['uri'] ?>">Add to Playlist</a></p>
+                        </div>
+                <?php }
+                } ?>
+                </div>
+                <?php if ($data['playlists']) { ?>
+                    <hr>
+                    <h3>Playlists</h3>
+                    <div class='row justify-content-center'>
+                        <?php foreach ($data['playlists']['items'] as $v) { ?>
+                            <div class='col-5 m-1 p-2 overflow-hidden text-center border border-muted rounded-3'>
+                                <div><img height="320" width="auto" src="<?php echo $v['images'][0]['url'] ?>"></div>
+                                <p class='fw-bold text-start'><?php echo $v['description'] ?></p>
+                            </div>
+                    <?php }
+                    } ?>
+                    </div>
+                    <?php if ($data['artists']) { ?>
+                        <hr>
+                        <h3>Artist</h3>
+                        <div class='row justify-content-center'>
+                            <?php foreach ($data['artists']['items'] as $v) { ?>
+                                <div class='col-5 m-1 p-2 overflow-hidden text-center border border-muted rounded-3'>
+                                    <div><img height="320" width="auto" src="<?php echo $v['images'][0]['url'] ?>"></div>
+                                    <p class='fw-bold text-start'><?php echo $v['name'] ?></p>
+                                </div>
+                        <?php }
+                        } ?>
+                        </div>
+                        <?php if ($data['albums']) { ?>
+                            <hr>
+                            <h3>Albums</h3>
+                            <div class='row justify-content-center'>
+                                <?php foreach ($data['albums']['items'] as $v) { ?>
+                                    <div class='col-5 m-1 p-2 overflow-hidden text-center border border-muted rounded-3'>
+                                        <div><img height="320" width="auto" src="<?php echo $v['images'][0]['url'] ?>"></div>
+                                        <p class='fw-bold text-start'><?php echo $v['name'] ?></p>
+                                    </div>
+                            <?php }
+                            } ?>
+                            </div>
+                            <pre>
+        <? //print_r($data) 
+        ?>
+    </pre>
+</div>

@@ -1,0 +1,23 @@
+#! /bin/bash
+
+branch=$(git branch | cut -b 2-) 
+echo "working on branch: $branch"
+echo "Continue? (Y/n): "
+read x
+if [ $x != 'Y' ]; then
+echo "Aborting"
+exit
+fi
+if [ -z $1 ]; then
+echo "No Commit message, Aborting"
+exit
+fi
+git add .
+echo "added all"
+git commit -m "$1"
+echo "Comitted with message [$1]"
+
+git push origin $branch
+echo "====================log===================="
+git log | head -n 5
+git log | head -n 1 | xclip -selection c
