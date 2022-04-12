@@ -32,10 +32,12 @@
         <tr>
             <th>Name</th>
             <th></th>
+            <th></th>
         </tr>
         <?php foreach ($playlist_data['items'] as $v) { ?>
             <tr>
                 <td><?php echo $v["track"]["name"] ?></td>
+                <td><a href="/spotify/player/<?php echo $v["track"]["uri"]?>">Play</a></td>
                 <td><a href="/spotify/deletetrack/<?php echo $v["track"]["uri"]?>/<?php echo $playListID?>">Delete</a></td>
             </tr>
         <?php } ?>

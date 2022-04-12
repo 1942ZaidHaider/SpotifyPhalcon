@@ -14,7 +14,7 @@ class IndexController extends Controller
     }
     public function indexAction()
     {
-        if (isset($this->session->user)) {
+        if (isset($this->session->user["id"])) {
             $this->response->redirect("index/dash");
         }
         if ($this->request->isPost()) {
@@ -30,6 +30,8 @@ class IndexController extends Controller
                 } else {
                     $this->response->redirect("index/auth");
                 }
+            } else {
+                die("<h1> Not registered </h1>");
             }
         }
     }
@@ -61,7 +63,7 @@ class IndexController extends Controller
             $this->view->data = json_decode($json, 1);
 
             /** Recommendations */
-            
+
             $client = new Client([
                 'base_uri' => $this->url,
                 'timeout'  => 5,
@@ -107,6 +109,11 @@ class IndexController extends Controller
                         "playlist-modify-private",
                         "user-read-private",
                         "user-read-email",
+                        "user-modify-playback-state",
+                        "user-read-playback-state",
+                        "user-read-currently-playing",
+                        "app-remote-control",
+                        "streaming",
                     ]),
                 ]
             ];
@@ -161,7 +168,7 @@ class IndexController extends Controller
                 $user->save();
                 $session = ["id" => $user->id, "access" => $token];
                 $this->session->user = $session;
-                $this->response->redirect("index/search");
+                $this->response->redirect("index/dash");
             } else {
                 die("error");
             }
@@ -194,5 +201,9 @@ class IndexController extends Controller
         }
 
         $this->view->data = $data ?? [];
+    }
+    public function logoutAction(){
+        $this->session->destroy();
+        $this->response->redirect("index");
     }
 }

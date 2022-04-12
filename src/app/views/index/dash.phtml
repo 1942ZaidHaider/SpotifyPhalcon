@@ -1,3 +1,4 @@
+<a href="/index/logout">Logout</a>
 <h2>Profile</h2>
 <div class='row'>
     <p class='col-2'>Name</p>
@@ -7,17 +8,21 @@
     <p class='col-2'>Email</p>
     <p class='col-2'><?php echo $data["email"] ?></p>
 </div>
-<a href="/spotify/player">Player</a>
+<a href="/spotify/player">Player</a> &nbsp;
+<a href="/spotify">Playlists</a>
 <?php if ($rec['tracks']) { ?>
     <hr>
     <h3>Tracks <a href="/index/search">Explore</a></h3>
     <div class='row justify-content-center'>
         <?php foreach ($rec['tracks'] as $v) { ?>
-            <div class='col-5 m-1 p-2 overflow-hidden text-center border border-muted rounded-3'>
-                <div><img height="320" width="auto" src="<?php echo $v['album']['images'][0]['url'] ?>"></div>
-                <p class='fw-bold text-start'><?php echo $v['album']['name'] ?></p>
-                <p class='fw-bold text-start'><a href="/spotify/addtrack/<?php echo $v['uri'] ?>">Add to Playlist</a></p>
-            </div> 
-            <?php }
-            } ?>
+            <div class='col-5 m-1 p-2 overflow-hidden text-center border border-muted rounded-3 row'>
+                <div class='col-6'><img height="160" width="auto" src="<?php echo $v['album']['images'][0]['url'] ?>"></div>
+                <div class='col'>
+                    <p class='fw-bold text-start'><?php echo $v['name'] ?></p>
+                    <p class='fw-bold text-muted text-start'><?php echo substr($v['album']['name'],0,16)?>...</p>
+                    <p class='fw-bold text-start'><a href="/spotify/addtrack/<?php echo $v['uri'] ?>">Add to Playlist</a></p>
+                </div>
+            </div>
+    <?php }
+    } ?>
     </div>

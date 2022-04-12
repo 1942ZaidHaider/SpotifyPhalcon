@@ -180,9 +180,60 @@ class SpotifyController extends Controller
             );
         }
     }
-    public function playerAction()
+    public function playerAction($uri = null)
     {
-        die("wip");
+        $client = new Client([
+            'base_uri' => $this->url,
+            'timeout'  => 5,
+        ]);
+        try {
+            $json = $client->request(
+                "GET",
+                "/v1/me/player/devices",
+                [
+                    "query" => ["access_token" => $this->access],
+                ]
+            );
+        } catch (ClientException $e) {
+            $this->eventsManager->fire("spotify:tokenExpired", $this);
+            $json = $client->request(
+                "GET",
+                "/v1/me/player/devices",
+                [
+                    "query" => ["access_token" => $this->access],
+                ]
+            );
+        }
+        $this->view->devices = json_decode($json->getBody(), 1);
 
+        if ($this->request->isPost()) {
+            $post = $this->request->getPost();
+            if ($post['action'] == "play") {
+                try {
+                    $json = $client->request(
+                        "PUT",
+                        "/v1/me/player/play",
+                        [
+                            "body" => json_encode(["context_uri" => $uri]),
+                            "query" => [
+                                "device_id" => $post["device"],
+                                "access_token" => $this->access,
+                            ]
+                        ]
+                    );
+                } catch (ClientException $e) {
+                    $mes = json_decode($e->getResponse()->getBody()->getContents(), 1);
+                    //print_r($mes);
+                    //die($mes['error']['reason']);
+                    if ($mes['error']['reason'] == "PREMIUM_REQUIRED") {
+                        echo "<h1>The Player api requires premium spotify account, Which is not available</h1>";
+                        die("<a href='/'>GO HOME</a>");
+                    } else {
+                        $this->eventsManager->fire("spotify:tokenExpired", $this);
+                        $this->response->redirect("spotify/player/$uri");
+                    }
+                }
+            }
+        }
     }
 }

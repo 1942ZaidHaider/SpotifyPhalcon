@@ -1,1 +1,16 @@
-<?php echo $devices ?>
+<pre><?php print_r($devices);
+print_r($_POST);
+?></pre>
+<a href="/">Home</a>
+<div>
+    <form method="post" class='form-group row'>
+        <div class='col-4 '>
+            <select name ="device" class='form-select'>
+                <?php foreach ($devices['devices'] as $v) { ?>
+                    <option value="<?php echo $v["id"] ?>"><?php echo $v['name'] ?></option>
+                <?php } ?>
+            </select>
+        </div>
+        <div class='col'><button name="action" value="play" class='btn btn-success'>Play</button></div>
+    </form>
+</div>

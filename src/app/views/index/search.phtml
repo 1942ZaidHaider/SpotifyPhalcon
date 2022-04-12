@@ -2,6 +2,7 @@
     <div class='navbar nav nav-expand'>
         <div>
             <a href="/spotify">View Playlists</a>
+            <a href="/">Home</a>
         </div>
     </div>
 </div>
@@ -55,10 +56,12 @@
             <h3>Tracks</h3>
             <div class='row justify-content-center'>
                 <?php foreach ($data['tracks']['items'] as $v) { ?>
-                    <div class='col-5 m-1 p-2 overflow-hidden text-center border border-muted rounded-3'>
-                        <div><img height="320" width="auto" src="<?php echo $v['album']['images'][0]['url'] ?>"></div>
-                        <p class='fw-bold text-start'><?php echo $v['album']['name'] ?></p>
-                        <p class='fw-bold text-start'><a href="/spotify/addtrack/<?php echo $v['uri'] ?>">Add to Playlist</a></p>
+                    <div class='col-5 m-1 p-2 overflow-hidden text-center border border-muted rounded-3 row'>
+                        <div class="col-6"><img height="160" width="auto" src="<?php echo $v['album']['images'][0]['url'] ?>"></div>
+                        <div class='col'>
+                            <p class='fw-bold text-start'><?php echo $v['name'] ?>/<span class='text-muted'><?php echo $v['album']['name'] ?></span></p>
+                            <p class='fw-bold text-start'><a href="/spotify/addtrack/<?php echo $v['uri'] ?>">Add to Playlist</a></p>
+                        </div>
                     </div> <?php }
                     } ?>
             </div>
